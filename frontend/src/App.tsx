@@ -1,122 +1,188 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import "./App.css";
+import heroImage from "./assets/hero.png";
 
-function App() {
-  const [count, setCount] = useState(0)
+type StatusItemProps = {
+  label: string;
+  value: number;
+  maxValue: number;
+  icon: string;
+};
+
+function StatusItem({
+  label,
+  value,
+  maxValue,
+  icon,
+}: StatusItemProps) {
+  const percentage = Math.min((value / maxValue) * 100, 100);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="status-item">
+      <div className="status-heading">
+        <div className="status-label">
+          <span className="status-icon" aria-hidden="true">
+            {icon}
+          </span>
+          <span>{label}</span>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
 
-      <div className="ticks"></div>
+        <span className="status-value">
+          {value}
+          <span className="status-max"> / {maxValue}</span>
+        </span>
+      </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <div
+        className="status-bar"
+        role="progressbar"
+        aria-label={label}
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={maxValue}
+      >
+        <div
+          className={`status-bar-fill status-bar-fill--${label.toLowerCase()}`}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+    </div>
+  );
 }
 
-export default App
+function App() {
+  const character = {
+    name: "ゼティス",
+    title: "始まりの冒険者",
+    level: 12,
+    hp: 820,
+    maxHp: 1000,
+    strength: 68,
+    maxStrength: 100,
+    intelligence: 54,
+    maxIntelligence: 100,
+    experience: 720,
+    nextLevelExperience: 1000,
+  };
+
+  const experiencePercentage = Math.min(
+    (character.experience / character.nextLevelExperience) * 100,
+    100,
+  );
+
+  return (
+    <main className="app">
+      <section className="status-screen">
+        <header className="screen-header">
+          <div>
+            <p className="screen-eyebrow">CHARACTER PROFILE</p>
+            <h1>キャラクターステータス</h1>
+          </div>
+
+          <span className="online-badge">
+            <span className="online-dot" />
+            冒険中
+          </span>
+        </header>
+
+        <div className="character-card">
+          <div className="character-visual">
+            <div className="character-image-frame">
+              <img
+                src={heroImage}
+                alt={`${character.name}のキャラクター画像`}
+                className="character-image"
+              />
+            </div>
+
+            <div className="level-badge">
+              <span>LEVEL</span>
+              <strong>{character.level}</strong>
+            </div>
+          </div>
+
+          <div className="character-details">
+            <div className="character-name-area">
+              <p className="character-title">{character.title}</p>
+              <h2>{character.name}</h2>
+            </div>
+
+            <div className="experience-area">
+              <div className="experience-heading">
+                <span>次のレベルまで</span>
+                <strong>
+                  {character.experience} / {character.nextLevelExperience} EXP
+                </strong>
+              </div>
+
+              <div
+                className="experience-bar"
+                role="progressbar"
+                aria-label="経験値"
+                aria-valuenow={character.experience}
+                aria-valuemin={0}
+                aria-valuemax={character.nextLevelExperience}
+              >
+                <div
+                  className="experience-bar-fill"
+                  style={{ width: `${experiencePercentage}%` }}
+                />
+              </div>
+
+              <p className="experience-remaining">
+                あと{" "}
+                <strong>
+                  {character.nextLevelExperience - character.experience}
+                </strong>{" "}
+                EXP
+              </p>
+            </div>
+
+            <div className="status-list">
+              <StatusItem
+                label="HP"
+                value={character.hp}
+                maxValue={character.maxHp}
+                icon="♥"
+              />
+
+              <StatusItem
+                label="Strength"
+                value={character.strength}
+                maxValue={character.maxStrength}
+                icon="⚔"
+              />
+
+              <StatusItem
+                label="Intelligence"
+                value={character.intelligence}
+                maxValue={character.maxIntelligence}
+                icon="✦"
+              />
+            </div>
+
+            <div className="summary-grid">
+              <div className="summary-card">
+                <span>総合戦闘力</span>
+                <strong>
+                  {character.strength + character.intelligence}
+                </strong>
+              </div>
+
+              <div className="summary-card">
+                <span>レベル進捗</span>
+                <strong>{Math.round(experiencePercentage)}%</strong>
+              </div>
+
+              <div className="summary-card">
+                <span>コンディション</span>
+                <strong>良好</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+export default App;
