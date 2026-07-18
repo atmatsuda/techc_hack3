@@ -411,3 +411,237 @@
     font-size: 0.78rem;
   }
 }
+
+.activity-section {
+  margin-top: 32px;
+  padding: clamp(24px, 5vw, 44px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  background: rgba(17, 20, 33, 0.92);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(16px);
+}
+
+.activity-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.activity-section-header h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+}
+
+.activity-description {
+  max-width: 380px;
+  margin: 0;
+  color: #858ba9;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.activity-form {
+  margin-top: 30px;
+}
+
+.activity-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.form-field {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.form-field-full {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #dfe2f1;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.required-label {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(255, 79, 125, 0.14);
+  color: #ff789a;
+  font-size: 0.65rem;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 13px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.045);
+  color: #f8f9ff;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-field input,
+.form-field select {
+  height: 52px;
+  padding: 0 16px;
+}
+
+.form-field textarea {
+  min-height: 120px;
+  padding: 15px 16px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: #656b88;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: rgba(117, 92, 255, 0.75);
+  background: rgba(117, 92, 255, 0.07);
+  box-shadow: 0 0 0 4px rgba(117, 92, 255, 0.12);
+}
+
+.form-field select option {
+  background: #161827;
+  color: #f8f9ff;
+}
+
+.input-with-unit {
+  position: relative;
+}
+
+.input-with-unit input {
+  padding-right: 70px;
+}
+
+.input-with-unit > span {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  color: #7f86a6;
+  font-size: 0.82rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.character-count {
+  color: #6f7695;
+  font-size: 0.74rem;
+  text-align: right;
+}
+
+.form-message {
+  margin: 22px 0 0;
+  padding: 13px 16px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.form-message-success {
+  border: 1px solid rgba(93, 244, 166, 0.2);
+  background: rgba(93, 244, 166, 0.08);
+  color: #8df0bd;
+}
+
+.form-message-error {
+  border: 1px solid rgba(255, 79, 125, 0.2);
+  background: rgba(255, 79, 125, 0.08);
+  color: #ff8aa8;
+}
+
+.form-actions {
+  margin-top: 28px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.form-actions button {
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 13px;
+  cursor: pointer;
+  font-weight: 800;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.form-actions button:hover {
+  transform: translateY(-2px);
+}
+
+.form-actions button:active {
+  transform: translateY(0);
+}
+
+.reset-button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #b7bbd0;
+}
+
+.reset-button:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.submit-button {
+  border: 1px solid rgba(137, 120, 255, 0.7);
+  background: linear-gradient(135deg, #755cff, #4f8cff);
+  color: #ffffff;
+  box-shadow: 0 12px 28px rgba(91, 78, 225, 0.28);
+}
+
+@media (max-width: 700px) {
+  .activity-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .activity-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-field-full {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 540px) {
+  .activity-section {
+    padding: 26px 20px;
+    border-radius: 22px;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}
