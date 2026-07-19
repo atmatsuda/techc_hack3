@@ -51,6 +51,14 @@ type StatusCalculationResponse = {
   condition_label: string;
 };
 
+type AnalysisResult = {
+  title: string;
+  summary: string;
+  good_points: string[];
+  advice: string[];
+  recommended_action: string;
+};
+
 type MessageType = "" | "success" | "error";
 
 const API_BASE_URL =
@@ -126,6 +134,9 @@ function App() {
   const [calculationResult, setCalculationResult] =
     useState<StatusCalculationResponse | null>(null);
 
+  const [analysisResult, setAnalysisResult] =
+    useState<AnalysisResult | null>(null);
+    
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] =
     useState<MessageType>("");
@@ -174,6 +185,19 @@ function App() {
     setIsSubmitting(true);
     setMessage("");
     setMessageType("");
+    setLevelUpMessage("");
+    setAnalysisResult(null);
+
+    const activityPayload = {
+      steps: Number(activityForm.steps),
+      heart_rate:
+        activityForm.heartRate === ""
+          ? null
+          : Number(activityForm.heartRate),
+      study_minutes: Number(activityForm.studyMinutes),
+      sleep_hours: Number(activityForm.sleepHours),
+      activity_type: activityForm.activityType,
+    };
 
     try {
       const response = await fetch(
@@ -183,18 +207,7 @@ function App() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            steps: Number(activityForm.steps),
-            heart_rate:
-              activityForm.heartRate === ""
-                ? null
-                : Number(activityForm.heartRate),
-            study_minutes: Number(
-              activityForm.studyMinutes,
-            ),
-            sleep_hours: Number(activityForm.sleepHours),
-            activity_type: activityForm.activityType,
-          }),
+          body: JSON.stringify(activityPayload),
         },
       );
 
@@ -219,6 +232,38 @@ function App() {
         (await response.json()) as StatusCalculationResponse;
 
       setCalculationResult(data);
+
+      const analysisResponse = await fetch(
+        `${API_BASE_URL}/api/activity/analyze`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(activityPayload),
+        },
+      );
+
+      if (!analysisResponse.ok) {
+        let errorMessage = "活動データの分析に失敗しました。";
+
+        try {
+          const errorData = await analysisResponse.json();
+
+          if (typeof errorData.detail === "string") {
+            errorMessage = errorData.detail;
+          }
+        } catch {
+          // JSON形式ではないエラーの場合は標準メッセージを使用する
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      const analysisData =
+        (await analysisResponse.json()) as AnalysisResult;
+
+      setAnalysisResult(analysisData);
 
       setCharacter((previousCharacter) => {
         let newExperience =
@@ -305,6 +350,8 @@ function App() {
     });
 
     setCalculationResult(null);
+    setAnalysisResult(null);
+    setLevelUpMessage("");
     setMessage("");
     setMessageType("");
   };
@@ -694,6 +741,70 @@ function App() {
               </button>
             </div>
           </form>
+
+          {analysisResult !== null && (
+            <section
+              className="analysis-card"
+              aria-labelledby="analysis-title"
+            >
+              <div className="analysis-card-header">
+                <div>
+                  <p className="screen-eyebrow">
+                    ACTIVITY ANALYSIS
+                  </p>
+
+                  <h2 id="analysis-title">
+                    {analysisResult.title}
+                  </h2>
+                </div>
+
+                <span className="analysis-badge">
+                  分析完了
+                </span>
+              </div>
+
+              <p className="analysis-summary">
+                {analysisResult.summary}
+              </p>
+
+              <div className="analysis-grid">
+                <article className="analysis-section">
+                  <h3>良かった点</h3>
+
+                  <ul>
+                    {analysisResult.good_points.map(
+                      (item, index) => (
+                        <li key={`good-${index}`}>
+                          {item}
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                </article>
+
+                <article className="analysis-section">
+                  <h3>アドバイス</h3>
+
+                  <ul>
+                    {analysisResult.advice.map(
+                      (item, index) => (
+                        <li key={`advice-${index}`}>
+                          {item}
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                </article>
+              </div>
+
+              <div className="recommended-action">
+                <span>次のおすすめ行動</span>
+                <strong>
+                  {analysisResult.recommended_action}
+                </strong>
+              </div>
+            </section>
+          )}
         </section>
       </section>
     </main>
