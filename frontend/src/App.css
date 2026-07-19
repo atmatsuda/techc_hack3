@@ -645,3 +645,28 @@
     width: 100%;
   }
 }
+
+.level-up-message {
+  margin-top: 16px;
+  padding: 12px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #ffe066;
+  background: rgba(255, 224, 102, 0.15);
+  border: 2px solid #ffe066;
+  border-radius: 12px;
+  animation: levelUpPop 0.5s ease;
+}
+
+@keyframes levelUpPop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
