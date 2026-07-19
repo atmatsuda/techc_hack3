@@ -7,12 +7,15 @@ from pydantic import BaseModel, Field
 
 app = FastAPI(
     title="TechC Hackathon API",
-    version="0.2.0",
+    version="0.3.0",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -56,11 +59,26 @@ class StatusResult(BaseModel):
     strength_gain: int
     intelligence_gain: int
     experience_gain: int
-    condition: Literal["excellent", "good", "normal", "tired"]
+    condition: Literal[
+        "excellent",
+        "good",
+        "normal",
+        "tired",
+    ]
     condition_label: str
 
 
-def calculate_condition(sleep_hours: float) -> tuple[str, str, float]:
+class AnalysisResult(BaseModel):
+    title: str
+    summary: str
+    good_points: list[str]
+    advice: list[str]
+    recommended_action: str
+
+
+def calculate_condition(
+    sleep_hours: float,
+) -> tuple[str, str, float]:
     if 7 <= sleep_hours <= 9:
         return "excellent", "絶好調", 1.2
 
@@ -73,7 +91,9 @@ def calculate_condition(sleep_hours: float) -> tuple[str, str, float]:
     return "tired", "疲労", 0.6
 
 
-def calculate_status(activity: ActivityData) -> StatusResult:
+def calculate_status(
+    activity: ActivityData,
+) -> StatusResult:
     condition, condition_label, condition_multiplier = (
         calculate_condition(activity.sleep_hours)
     )
@@ -104,11 +124,14 @@ def calculate_status(activity: ActivityData) -> StatusResult:
     if activity.heart_rate is not None:
         if 100 <= activity.heart_rate <= 160:
             strength_gain += 2
+
         elif activity.heart_rate > 180:
             hp_gain = max(hp_gain - 2, 0)
 
     hp_gain = round(hp_gain * condition_multiplier)
-    strength_gain = round(strength_gain * condition_multiplier)
+    strength_gain = round(
+        strength_gain * condition_multiplier
+    )
     intelligence_gain = round(
         intelligence_gain * condition_multiplier
     )
@@ -135,6 +158,139 @@ def calculate_status(activity: ActivityData) -> StatusResult:
     )
 
 
+def analyze_activity(
+    activity: ActivityData,
+) -> AnalysisResult:
+    condition, condition_label, _ = calculate_condition(
+        activity.sleep_hours
+    )
+
+    good_points: list[str] = []
+    advice: list[str] = []
+
+    if activity.steps >= 10000:
+        good_points.append(
+            "1万歩以上を達成しており、十分な運動量を確保できています。"
+        )
+    elif activity.steps >= 7000:
+        good_points.append(
+            "日常の活動量として良い歩数を記録できています。"
+        )
+    elif activity.steps >= 3000:
+        advice.append(
+            "あと少し歩く時間を増やすと、さらに体力を伸ばせます。"
+        )
+    else:
+        advice.append(
+            "短時間の散歩から始めて、活動量を少しずつ増やしましょう。"
+        )
+
+    if activity.study_minutes >= 180:
+        good_points.append(
+            "3時間以上の学習を継続しており、知力の成長が期待できます。"
+        )
+    elif activity.study_minutes >= 60:
+        good_points.append(
+            "1時間以上の学習時間を確保できています。"
+        )
+    elif activity.study_minutes > 0:
+        advice.append(
+            "学習時間を30分単位で増やすと、知力を効率よく伸ばせます。"
+        )
+    else:
+        advice.append(
+            "短時間でも学習を行うと、知力と経験値を獲得できます。"
+        )
+
+    if 7 <= activity.sleep_hours <= 9:
+        good_points.append(
+            "睡眠時間が適切で、良いコンディションを保てています。"
+        )
+    elif activity.sleep_hours < 6:
+        advice.append(
+            "睡眠時間が不足しています。今日は回復を優先しましょう。"
+        )
+    elif activity.sleep_hours > 10:
+        advice.append(
+            "睡眠時間が長めです。生活リズムを整えることを意識しましょう。"
+        )
+
+    if activity.heart_rate is not None:
+        if 100 <= activity.heart_rate <= 160:
+            good_points.append(
+                "運動時の心拍数が適度な範囲に入っています。"
+            )
+        elif activity.heart_rate > 180:
+            advice.append(
+                "心拍数が高めです。無理をせず、休憩や運動強度の調整を行いましょう。"
+            )
+
+    activity_labels = {
+        "walking": "ウォーキング",
+        "running": "ランニング",
+        "training": "筋力トレーニング",
+        "study": "勉強",
+        "work": "仕事・アルバイト",
+        "other": "その他の活動",
+    }
+
+    activity_label = activity_labels[activity.activity_type]
+
+    if condition == "excellent":
+        title = "最高のコンディションです"
+        summary = (
+            f"{activity_label}に取り組みながら、"
+            "運動・学習・休息のバランスを良く保てています。"
+        )
+    elif condition == "good":
+        title = "順調に成長しています"
+        summary = (
+            f"{activity_label}を通して、"
+            "キャラクターを着実に成長させることができました。"
+        )
+    elif condition == "normal":
+        title = "無理のない成長を続けましょう"
+        summary = (
+            f"{activity_label}による成果が出ています。"
+            "休息も取りながら継続することが大切です。"
+        )
+    else:
+        title = "今日は回復を優先しましょう"
+        summary = (
+            f"{activity_label}に取り組めたことは良い成果です。"
+            "ただし、現在は疲労状態のため休息を優先してください。"
+        )
+
+    if not good_points:
+        good_points.append(
+            "今日の活動を記録し、成長につなげられたことが大きな一歩です。"
+        )
+
+    if not advice:
+        advice.append(
+            "現在の活動バランスを維持し、無理なく継続しましょう。"
+        )
+
+    if activity.sleep_hours < 6:
+        recommended_action = "十分な睡眠を取り、体力を回復する"
+    elif activity.steps < 5000:
+        recommended_action = "10〜20分程度のウォーキングを行う"
+    elif activity.study_minutes < 60:
+        recommended_action = "30分以上の学習時間を確保する"
+    else:
+        recommended_action = (
+            f"現在の{condition_label}な状態を維持して活動を継続する"
+        )
+
+    return AnalysisResult(
+        title=title,
+        summary=summary,
+        good_points=good_points,
+        advice=advice,
+        recommended_action=recommended_action,
+    )
+
+
 @app.get("/")
 def root():
     return {"message": "Backend is running"}
@@ -153,3 +309,13 @@ def calculate_character_status(
     activity: ActivityData,
 ) -> StatusResult:
     return calculate_status(activity)
+
+
+@app.post(
+    "/api/activity/analyze",
+    response_model=AnalysisResult,
+)
+def analyze_daily_activity(
+    activity: ActivityData,
+) -> AnalysisResult:
+    return analyze_activity(activity)
