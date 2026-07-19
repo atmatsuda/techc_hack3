@@ -130,6 +130,7 @@ function App() {
   const [messageType, setMessageType] =
     useState<MessageType>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [levelUpMessage, setLevelUpMessage] = useState("");
 
   const experiencePercentage = Math.min(
     (character.experience / character.nextLevelExperience) * 100,
@@ -219,29 +220,62 @@ function App() {
 
       setCalculationResult(data);
 
-      setCharacter((previousCharacter) => ({
-        ...previousCharacter,
-        hp: Math.min(
-          previousCharacter.hp + data.hp_gain,
-          previousCharacter.maxHp,
-        ),
-        strength: Math.min(
-          previousCharacter.strength +
-            data.strength_gain,
-          previousCharacter.maxStrength,
-        ),
-        intelligence: Math.min(
-          previousCharacter.intelligence +
-            data.intelligence_gain,
-          previousCharacter.maxIntelligence,
-        ),
-        experience: Math.min(
-          previousCharacter.experience +
-            data.experience_gain,
-          previousCharacter.nextLevelExperience,
-        ),
-        condition: data.condition_label,
-      }));
+      setCharacter((previousCharacter) => {
+        let newExperience =
+          previousCharacter.experience + data.experience_gain;
+
+        let newLevel = previousCharacter.level;
+        let nextLevelExperience =
+          previousCharacter.nextLevelExperience;
+
+        let maxHp = previousCharacter.maxHp;
+        let maxStrength = previousCharacter.maxStrength;
+        let maxIntelligence = previousCharacter.maxIntelligence;
+
+        while (newExperience >= nextLevelExperience) {
+          newExperience -= nextLevelExperience;
+          newLevel++;
+
+          nextLevelExperience += 200;
+
+          maxHp += 30;
+          maxStrength += 3;
+          maxIntelligence += 3;
+
+          setLevelUpMessage(`🎉 LEVEL UP !! Lv.${newLevel}`);
+        }
+
+        return {
+          ...previousCharacter,
+          level: newLevel,
+
+          hp: Math.min(
+            previousCharacter.hp + data.hp_gain,
+            maxHp,
+          ),
+
+          maxHp,
+
+          strength: Math.min(
+            previousCharacter.strength + data.strength_gain,
+            maxStrength,
+          ),
+
+          maxStrength,
+
+          intelligence: Math.min(
+            previousCharacter.intelligence +
+              data.intelligence_gain,
+            maxIntelligence,
+          ),
+
+          maxIntelligence,
+
+          experience: newExperience,
+          nextLevelExperience: nextLevelExperience,
+          condition: data.condition_label,
+        };
+      });
 
       setMessage("活動データを登録し、ステータスを更新しました。");
       setMessageType("success");
@@ -307,6 +341,11 @@ function App() {
               <span>LEVEL</span>
               <strong>{character.level}</strong>
             </div>
+             {levelUpMessage !== "" && (
+              <div className="level-up-message">
+                {levelUpMessage}
+              </div>
+            )}
           </div>
 
           <div className="character-details">
