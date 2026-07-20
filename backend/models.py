@@ -15,15 +15,9 @@ class ActivityHistory(Base):
         autoincrement=True,
     )
 
-    activity_type: Mapped[str] = mapped_column(
-        String(50),
-        nullable=False,
-    )
-
     steps: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
-        default=0,
     )
 
     heart_rate: Mapped[int | None] = mapped_column(
@@ -34,34 +28,61 @@ class ActivityHistory(Base):
     study_minutes: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
-        default=0,
     )
 
     sleep_hours: Mapped[float] = mapped_column(
         Float,
         nullable=False,
-        default=0,
     )
 
-    memo: Mapped[str | None] = mapped_column(
-        String(200),
-        nullable=True,
+    activity_type: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+    )
+
+    hp_gain: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    strength_gain: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+    )
+
+    intelligence_gain: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
     )
 
     experience_gain: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
-        default=0,
     )
 
-    condition_label: Mapped[str | None] = mapped_column(
-        String(50),
-        nullable=True,
+    condition: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
     )
 
-    analysis_summary: Mapped[str | None] = mapped_column(
+    condition_label: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+    )
+
+    analysis_title: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
+    analysis_summary: Mapped[str] = mapped_column(
         Text,
-        nullable=True,
+        nullable=False,
+    )
+
+    recommended_action: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
     )
 
     created_at: Mapped[datetime] = mapped_column(
