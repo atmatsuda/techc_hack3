@@ -3,10 +3,11 @@ from typing import Literal
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from sqlalchemy import text
+from sqlalchemy import desc, text
 from sqlalchemy.orm import Session
 
 import models
+import schemas
 from database import Base, engine, get_db
 
 
@@ -376,3 +377,58 @@ def analyze_daily_activity(
     activity: ActivityData,
 ) -> AnalysisResult:
     return analyze_activity(activity)
+
+@app.post(
+    "/api/activity/history",
+    response_model=schemas.ActivityHistoryResponse,
+)
+def create_activity_history(
+    activity: schemas.ActivityHistoryCreate,
+    db: Session = Depends(get_db),
+):
+    activity_data = ActivityData(
+        steps=activity.steps,
+        heart_rate=activity.heart_rate,
+        study_minutes=activity.study_minutes,
+        sleep_hours=activity.sleep_hours,
+        activity_type=activity.activity_type,
+    )
+
+    status_result = calculate_status(activity_data)
+    analysis_result = analyze_activity(activity_data)
+
+    history = models.ActivityHistory(
+        steps=activity.steps,
+        heart_rate=activity.heart_rate,
+        study_minutes=activity.study_minutes,
+        sleep_hours=activity.sleep_hours,
+        activity_type=activity.activity_type,
+        hp_gain=status_result.hp_gain,
+        strength_gain=status_result.strength_gain,
+        intelligence_gain=status_result.intelligence_gain,
+        experience_gain=status_result.experience_gain,
+        condition=status_result.condition,
+        condition_label=status_result.condition_label,
+        analysis_title=analysis_result.title,
+        analysis_summary=analysis_result.summary,
+        recommended_action=analysis_result.recommended_action,
+    )
+
+    db.add(history)
+    db.commit()
+    db.refresh(history)
+
+    return history
+
+@app.get(
+    "/api/activity/history",
+    response_model=list[schemas.ActivityHistoryResponse],
+)
+def get_activity_history(
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(models.ActivityHistory)
+        .order_by(desc(models.ActivityHistory.created_at))
+        .all()
+    )

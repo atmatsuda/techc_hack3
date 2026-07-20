@@ -576,3 +576,33 @@ refactor: API処理を整理
 - Pull Requestを作成してから`main`へ取り込む
 
 ---
+
+## データベース
+
+- MySQL
+- SQLAlchemy
+- PyMySQL
+- 環境変数は `.env` で管理
+
+### 環境変数
+
+`backend/.env` を作成し、以下を設定してください。
+
+```env
+DATABASE_URL=mysql+pymysql://root:パスワード@localhost:3306/activity_rpg
+
+## バックエンド環境構築
+
+```bash
+cd backend
+pip install fastapi uvicorn sqlalchemy pymysql python-dotenv
+
+
+`requirements.txt` には最低限これを入れる。
+
+```txt
+fastapi
+uvicorn
+sqlalchemy
+pymysql
+python-dotenv
