@@ -1,14 +1,22 @@
 from typing import Literal
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+import models
+from database import Base, engine, get_db
 
 
 app = FastAPI(
     title="TechC Hackathon API",
-    version="0.3.0",
+    version="0.4.0",
 )
+
+Base.metadata.create_all(bind=engine)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,22 +36,26 @@ class ActivityData(BaseModel):
         le=100000,
         description="1日の歩数",
     )
+
     heart_rate: int | None = Field(
         default=None,
         ge=30,
         le=220,
         description="平均心拍数",
     )
+
     study_minutes: int = Field(
         ge=0,
         le=1440,
         description="勉強時間（分）",
     )
+
     sleep_hours: float = Field(
         ge=0,
         le=24,
         description="睡眠時間",
     )
+
     activity_type: Literal[
         "walking",
         "running",
@@ -59,12 +71,14 @@ class StatusResult(BaseModel):
     strength_gain: int
     intelligence_gain: int
     experience_gain: int
+
     condition: Literal[
         "excellent",
         "good",
         "normal",
         "tired",
     ]
+
     condition_label: str
 
 
@@ -129,9 +143,11 @@ def calculate_status(
             hp_gain = max(hp_gain - 2, 0)
 
     hp_gain = round(hp_gain * condition_multiplier)
+
     strength_gain = round(
         strength_gain * condition_multiplier
     )
+
     intelligence_gain = round(
         intelligence_gain * condition_multiplier
     )
@@ -172,14 +188,17 @@ def analyze_activity(
         good_points.append(
             "1万歩以上を達成しており、十分な運動量を確保できています。"
         )
+
     elif activity.steps >= 7000:
         good_points.append(
             "日常の活動量として良い歩数を記録できています。"
         )
+
     elif activity.steps >= 3000:
         advice.append(
             "あと少し歩く時間を増やすと、さらに体力を伸ばせます。"
         )
+
     else:
         advice.append(
             "短時間の散歩から始めて、活動量を少しずつ増やしましょう。"
@@ -189,14 +208,17 @@ def analyze_activity(
         good_points.append(
             "3時間以上の学習を継続しており、知力の成長が期待できます。"
         )
+
     elif activity.study_minutes >= 60:
         good_points.append(
             "1時間以上の学習時間を確保できています。"
         )
+
     elif activity.study_minutes > 0:
         advice.append(
             "学習時間を30分単位で増やすと、知力を効率よく伸ばせます。"
         )
+
     else:
         advice.append(
             "短時間でも学習を行うと、知力と経験値を獲得できます。"
@@ -206,10 +228,12 @@ def analyze_activity(
         good_points.append(
             "睡眠時間が適切で、良いコンディションを保てています。"
         )
+
     elif activity.sleep_hours < 6:
         advice.append(
             "睡眠時間が不足しています。今日は回復を優先しましょう。"
         )
+
     elif activity.sleep_hours > 10:
         advice.append(
             "睡眠時間が長めです。生活リズムを整えることを意識しましょう。"
@@ -220,6 +244,7 @@ def analyze_activity(
             good_points.append(
                 "運動時の心拍数が適度な範囲に入っています。"
             )
+
         elif activity.heart_rate > 180:
             advice.append(
                 "心拍数が高めです。無理をせず、休憩や運動強度の調整を行いましょう。"
@@ -238,24 +263,31 @@ def analyze_activity(
 
     if condition == "excellent":
         title = "最高のコンディションです"
+
         summary = (
             f"{activity_label}に取り組みながら、"
             "運動・学習・休息のバランスを良く保てています。"
         )
+
     elif condition == "good":
         title = "順調に成長しています"
+
         summary = (
             f"{activity_label}を通して、"
             "キャラクターを着実に成長させることができました。"
         )
+
     elif condition == "normal":
         title = "無理のない成長を続けましょう"
+
         summary = (
             f"{activity_label}による成果が出ています。"
             "休息も取りながら継続することが大切です。"
         )
+
     else:
         title = "今日は回復を優先しましょう"
+
         summary = (
             f"{activity_label}に取り組めたことは良い成果です。"
             "ただし、現在は疲労状態のため休息を優先してください。"
@@ -272,11 +304,20 @@ def analyze_activity(
         )
 
     if activity.sleep_hours < 6:
-        recommended_action = "十分な睡眠を取り、体力を回復する"
+        recommended_action = (
+            "十分な睡眠を取り、体力を回復する"
+        )
+
     elif activity.steps < 5000:
-        recommended_action = "10〜20分程度のウォーキングを行う"
+        recommended_action = (
+            "10〜20分程度のウォーキングを行う"
+        )
+
     elif activity.study_minutes < 60:
-        recommended_action = "30分以上の学習時間を確保する"
+        recommended_action = (
+            "30分以上の学習時間を確保する"
+        )
+
     else:
         recommended_action = (
             f"現在の{condition_label}な状態を維持して活動を継続する"
@@ -293,12 +334,28 @@ def analyze_activity(
 
 @app.get("/")
 def root():
-    return {"message": "Backend is running"}
+    return {
+        "message": "Backend is running",
+    }
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+    }
+
+
+@app.get("/api/db-check")
+def db_check(
+    db: Session = Depends(get_db),
+):
+    db.execute(text("SELECT 1"))
+
+    return {
+        "status": "success",
+        "message": "MySQLへの接続に成功しました",
+    }
 
 
 @app.post(
