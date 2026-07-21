@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import "./App.css";
 import heroImage from "./assets/hero.png";
 
@@ -59,46 +59,10 @@ type AnalysisResult = {
   recommended_action: string;
 };
 
-type ActivityHistory = {
-  id: string;
-  createdAt: string;
-  activityType: ActivityType;
-  activityLabel: string;
-  steps: number;
-  heartRate: number | null;
-  studyMinutes: number;
-  sleepHours: number;
-  memo: string;
-  hpGain: number;
-  strengthGain: number;
-  intelligenceGain: number;
-  experienceGain: number;
-  conditionLabel: string;
-  analysisTitle: string;
-  analysisSummary: string;
-  recommendedAction: string;
-};
-
 type MessageType = "" | "success" | "error";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
-
-const ACTIVITY_HISTORY_STORAGE_KEY = "techc-hack3-activity-history";
-
-const activityTypeLabels: Record<Exclude<ActivityType, "">, string> = {
-  walking: "ウォーキング",
-  running: "ランニング",
-  training: "筋力トレーニング",
-  study: "勉強",
-  work: "仕事・アルバイト",
-  other: "その他",
-};
-
-const createHistoryId = () =>
-  "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 function StatusItem({
   label,
@@ -173,24 +137,6 @@ function App() {
   const [analysisResult, setAnalysisResult] =
     useState<AnalysisResult | null>(null);
     
-
-  const [activityHistory, setActivityHistory] =
-    useState<ActivityHistory[]>(() => {
-      const savedHistory = localStorage.getItem(
-        ACTIVITY_HISTORY_STORAGE_KEY,
-      );
-
-      if (savedHistory === null) {
-        return [];
-      }
-
-      try {
-        return JSON.parse(savedHistory) as ActivityHistory[];
-      } catch {
-        return [];
-      }
-    });
-
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] =
     useState<MessageType>("");
@@ -206,30 +152,6 @@ function App() {
     character.nextLevelExperience - character.experience,
     0,
   );
-
-  useEffect(() => {
-    localStorage.setItem(
-      ACTIVITY_HISTORY_STORAGE_KEY,
-      JSON.stringify(activityHistory),
-    );
-  }, [activityHistory]);
-
-  const handleDeleteHistory = (historyId: string) => {
-    setActivityHistory((previousHistory) =>
-      previousHistory.filter((item) => item.id !== historyId),
-    );
-  };
-
-  const handleClearHistory = () => {
-    if (
-      activityHistory.length === 0 ||
-      !window.confirm("活動履歴をすべて削除しますか？")
-    ) {
-      return;
-    }
-
-    setActivityHistory([]);
-  };
 
   const handleInputChange = (
     field: keyof ActivityForm,
@@ -342,34 +264,6 @@ function App() {
         (await analysisResponse.json()) as AnalysisResult;
 
       setAnalysisResult(analysisData);
-
-      const historyItem: ActivityHistory = {
-        id: createHistoryId(),
-        createdAt: new Date().toISOString(),
-        activityType: activityForm.activityType,
-        activityLabel:
-          activityTypeLabels[
-            activityForm.activityType as Exclude<ActivityType, "">
-          ],
-        steps: activityPayload.steps,
-        heartRate: activityPayload.heart_rate,
-        studyMinutes: activityPayload.study_minutes,
-        sleepHours: activityPayload.sleep_hours,
-        memo: activityForm.memo.trim(),
-        hpGain: data.hp_gain,
-        strengthGain: data.strength_gain,
-        intelligenceGain: data.intelligence_gain,
-        experienceGain: data.experience_gain,
-        conditionLabel: data.condition_label,
-        analysisTitle: analysisData.title,
-        analysisSummary: analysisData.summary,
-        recommendedAction: analysisData.recommended_action,
-      };
-
-      setActivityHistory((previousHistory) => [
-        historyItem,
-        ...previousHistory,
-      ]);
 
       setCharacter((previousCharacter) => {
         let newExperience =
@@ -911,126 +805,6 @@ function App() {
               </div>
             </section>
           )}
-
-          <section
-            className="history-section"
-            aria-labelledby="history-title"
-          >
-            <div className="history-section-header">
-              <div>
-                <p className="screen-eyebrow">ACTIVITY HISTORY</p>
-                <h2 id="history-title">活動履歴</h2>
-              </div>
-
-              <button
-                type="button"
-                className="history-clear-button"
-                onClick={handleClearHistory}
-                disabled={activityHistory.length === 0}
-              >
-                履歴をすべて削除
-              </button>
-            </div>
-
-            {activityHistory.length === 0 ? (
-              <div className="history-empty">
-                <strong>まだ活動履歴がありません。</strong>
-                <span>
-                  活動を登録すると、ここに記録が表示されます。
-                </span>
-              </div>
-            ) : (
-              <div className="history-list">
-                {activityHistory.map((historyItem) => (
-                  <article
-                    key={historyItem.id}
-                    className="history-card"
-                  >
-                    <div className="history-card-header">
-                      <div>
-                        <span className="history-activity-label">
-                          {historyItem.activityLabel}
-                        </span>
-
-                        <time dateTime={historyItem.createdAt}>
-                          {new Date(
-                            historyItem.createdAt,
-                          ).toLocaleString("ja-JP")}
-                        </time>
-                      </div>
-
-                      <button
-                        type="button"
-                        className="history-delete-button"
-                        onClick={() =>
-                          handleDeleteHistory(historyItem.id)
-                        }
-                      >
-                        削除
-                      </button>
-                    </div>
-
-                    <div className="history-metrics">
-                      <div>
-                        <span>歩数</span>
-                        <strong>
-                          {historyItem.steps.toLocaleString()}歩
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>勉強時間</span>
-                        <strong>
-                          {historyItem.studyMinutes}分
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>睡眠時間</span>
-                        <strong>
-                          {historyItem.sleepHours}時間
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>獲得EXP</span>
-                        <strong>
-                          +{historyItem.experienceGain}
-                        </strong>
-                      </div>
-                    </div>
-
-                    <div className="history-gains">
-                      <span>HP +{historyItem.hpGain}</span>
-                      <span>STR +{historyItem.strengthGain}</span>
-                      <span>INT +{historyItem.intelligenceGain}</span>
-                      <span>{historyItem.conditionLabel}</span>
-                    </div>
-
-                    <div className="history-analysis">
-                      <h3>{historyItem.analysisTitle}</h3>
-                      <p>{historyItem.analysisSummary}</p>
-
-                      <div>
-                        <span>おすすめ</span>
-                        <strong>
-                          {historyItem.recommendedAction}
-                        </strong>
-                      </div>
-                    </div>
-
-                    {historyItem.memo !== "" && (
-                      <p className="history-memo">
-                        <span>メモ：</span>
-                        {historyItem.memo}
-                      </p>
-                    )}
-                  </article>
-                ))}
-              </div>
-            )}
-          </section>
-
         </section>
       </section>
     </main>
