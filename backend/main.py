@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import desc, text
 from sqlalchemy.orm import Session
 
+import auth
 import models
 import schemas
 from database import Base, engine, get_db
@@ -13,10 +14,14 @@ from database import Base, engine, get_db
 
 app = FastAPI(
     title="TechC Hackathon API",
-    version="0.4.0",
+    version="0.5.0",
 )
 
+# models.pyに定義されているテーブルを作成する
 Base.metadata.create_all(bind=engine)
+
+# 認証APIを登録する
+app.include_router(auth.router)
 
 
 app.add_middleware(
@@ -143,7 +148,9 @@ def calculate_status(
         elif activity.heart_rate > 180:
             hp_gain = max(hp_gain - 2, 0)
 
-    hp_gain = round(hp_gain * condition_multiplier)
+    hp_gain = round(
+        hp_gain * condition_multiplier
+    )
 
     strength_gain = round(
         strength_gain * condition_multiplier
@@ -161,7 +168,10 @@ def calculate_status(
     )
 
     experience_gain = max(
-        round(experience_gain * condition_multiplier),
+        round(
+            experience_gain
+            * condition_multiplier
+        ),
         0,
     )
 
@@ -178,8 +188,10 @@ def calculate_status(
 def analyze_activity(
     activity: ActivityData,
 ) -> AnalysisResult:
-    condition, condition_label, _ = calculate_condition(
-        activity.sleep_hours
+    condition, condition_label, _ = (
+        calculate_condition(
+            activity.sleep_hours
+        )
     )
 
     good_points: list[str] = []
@@ -260,7 +272,9 @@ def analyze_activity(
         "other": "その他の活動",
     }
 
-    activity_label = activity_labels[activity.activity_type]
+    activity_label = activity_labels[
+        activity.activity_type
+    ]
 
     if condition == "excellent":
         title = "最高のコンディションです"
@@ -337,6 +351,7 @@ def analyze_activity(
 def root():
     return {
         "message": "Backend is running",
+        "version": "0.5.0",
     }
 
 
@@ -378,6 +393,7 @@ def analyze_daily_activity(
 ) -> AnalysisResult:
     return analyze_activity(activity)
 
+
 @app.post(
     "/api/activity/history",
     response_model=schemas.ActivityHistoryResponse,
@@ -394,8 +410,13 @@ def create_activity_history(
         activity_type=activity.activity_type,
     )
 
-    status_result = calculate_status(activity_data)
-    analysis_result = analyze_activity(activity_data)
+    status_result = calculate_status(
+        activity_data
+    )
+
+    analysis_result = analyze_activity(
+        activity_data
+    )
 
     history = models.ActivityHistory(
         steps=activity.steps,
@@ -405,30 +426,53 @@ def create_activity_history(
         activity_type=activity.activity_type,
         hp_gain=status_result.hp_gain,
         strength_gain=status_result.strength_gain,
-        intelligence_gain=status_result.intelligence_gain,
-        experience_gain=status_result.experience_gain,
+        intelligence_gain=(
+            status_result.intelligence_gain
+        ),
+        experience_gain=(
+            status_result.experience_gain
+        ),
         condition=status_result.condition,
-        condition_label=status_result.condition_label,
+        condition_label=(
+            status_result.condition_label
+        ),
         analysis_title=analysis_result.title,
-        analysis_summary=analysis_result.summary,
-        recommended_action=analysis_result.recommended_action,
+        analysis_summary=(
+            analysis_result.summary
+        ),
+        recommended_action=(
+            analysis_result.recommended_action
+        ),
     )
 
     db.add(history)
-    db.commit()
-    db.refresh(history)
+
+    try:
+        db.commit()
+        db.refresh(history)
+
+    except Exception:
+        db.rollback()
+        raise
 
     return history
 
+
 @app.get(
     "/api/activity/history",
-    response_model=list[schemas.ActivityHistoryResponse],
+    response_model=list[
+        schemas.ActivityHistoryResponse
+    ],
 )
 def get_activity_history(
     db: Session = Depends(get_db),
 ):
     return (
         db.query(models.ActivityHistory)
-        .order_by(desc(models.ActivityHistory.created_at))
+        .order_by(
+            desc(
+                models.ActivityHistory.created_at
+            )
+        )
         .all()
     )
