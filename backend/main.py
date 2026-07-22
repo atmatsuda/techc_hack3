@@ -9,9 +9,10 @@ from database import Base, engine, get_db
 # create_allより先にimportする必要がある
 import models.match
 import models.round
+import models.sensor_record
 
 from routers.matches import router as matches_router
-
+from routers.sensor_records import router as sensor_records_router
 
 app = FastAPI(
     title="IoT Boxing API",
@@ -41,6 +42,7 @@ app.add_middleware(
 # ボクシング試合API
 app.include_router(matches_router)
 
+app.include_router(sensor_records_router)
 
 @app.get("/")
 def root():
