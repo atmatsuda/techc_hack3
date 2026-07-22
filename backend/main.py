@@ -20,20 +20,19 @@ app = FastAPI(
 # models.pyに定義されているテーブルを作成する
 Base.metadata.create_all(bind=engine)
 
-# 認証APIを登録する
-app.include_router(auth.router)
-
-
+# フロントエンドからのAPIアクセスを許可する
+# Viteのポートが5173以外になった場合にも対応できるようにする
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=[],
+    allow_origin_regex=r"^https?://(localhost|127\\.0\\.0\\.1)(:\\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 認証APIを登録する
+app.include_router(auth.router)
 
 
 class ActivityData(BaseModel):
@@ -475,4 +474,14 @@ def get_activity_history(
             )
         )
         .all()
+    )
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "main:app",
+        host="127.0.0.1",
+        port=8000,
+        reload=True,
     )
