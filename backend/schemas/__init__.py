@@ -1,20 +1,15 @@
-from datetime import datetime
+from schemas.match import MatchCreate, MatchResponse
+from schemas.round import RoundFinishRequest, RoundResponse
+from schemas.sensor_record import (
+    SensorRecordCreate,
+    SensorRecordResponse,
+)
 
-from pydantic import BaseModel, ConfigDict
-
-
-class RoundFinishRequest(BaseModel):
-    winner_name: str
-
-
-class RoundResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    match_id: int
-    round_number: int
-    winner_name: str | None
-    status: str
-    started_at: datetime | None
-    finished_at: datetime | None
-    created_at: datetime
+__all__ = [
+    "MatchCreate",
+    "MatchResponse",
+    "RoundFinishRequest",
+    "RoundResponse",
+    "SensorRecordCreate",
+    "SensorRecordResponse",
+]
