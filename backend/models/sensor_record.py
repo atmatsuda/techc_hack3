@@ -52,3 +52,9 @@ class SensorRecord(Base):
         nullable=False,
         default=datetime.now,
     )
+
+    device_id: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        index=True,
+    )
