@@ -1,10 +1,17 @@
 from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from models.match import BoxingMatch
 from models.round import BoxingRound
 from models.sensor_record import SensorRecord
 from schemas.sensor_record import SensorRecordCreate
+
+
+DEVICE_PLAYER_MAP = {
+    "glove_1": "player1",
+    "glove_2": "player2",
+}
 
 
 def create_sensor_record(
@@ -40,25 +47,38 @@ def create_sensor_record(
             detail="ラウンドが見つかりません。",
         )
 
-    if sensor_data.player_name not in {
-        match.player1_name,
-        match.player2_name,
-    }:
-        raise HTTPException(
-            status_code=400,
-            detail="選手名は試合参加者から指定してください。",
-        )
-
     if boxing_round.status != "ACTIVE":
         raise HTTPException(
             status_code=400,
             detail="進行中のラウンドにのみセンサーデータを登録できます。",
         )
 
+    mapped_player_name = DEVICE_PLAYER_MAP.get(sensor_data.device_id)
+
+    if mapped_player_name is None:
+        raise HTTPException(
+            status_code=400,
+            detail="登録されていないデバイスIDです。",
+        )
+
+    match_player_map = {
+        "player1": match.player1_name,
+        "player2": match.player2_name,
+    }
+
+    player_name = match_player_map.get(mapped_player_name)
+
+    if player_name is None:
+        raise HTTPException(
+            status_code=400,
+            detail="デバイスに対応する選手が見つかりません。",
+        )
+
     record = SensorRecord(
         match_id=match_id,
         round_id=round_id,
-        player_name=sensor_data.player_name,
+        device_id=sensor_data.device_id,
+        player_name=player_name,
         heart_rate=sensor_data.heart_rate,
         punch_speed=sensor_data.punch_speed,
         impact_value=sensor_data.impact_value,
@@ -69,8 +89,11 @@ def create_sensor_record(
     try:
         db.commit()
         db.refresh(record)
-    except Exception:
+    except SQLAlchemyError as exc:
         db.rollback()
-        raise
+        raise HTTPException(
+            status_code=500,
+            detail="センサーデータの保存に失敗しました。",
+        ) from exc
 
     return record

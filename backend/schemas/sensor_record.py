@@ -4,9 +4,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class SensorRecordCreate(BaseModel):
-    player_name: str = Field(
+    device_id: str = Field(
         min_length=1,
-        max_length=100,
+        max_length=50,
     )
 
     heart_rate: int = Field(
@@ -31,6 +31,7 @@ class SensorRecordResponse(BaseModel):
     id: int
     match_id: int
     round_id: int
+    device_id: str
     player_name: str
     heart_rate: int
     punch_speed: float
